@@ -12,7 +12,7 @@ The S21 Cat Utility is a command-line tool inspired by the Unix `cat` utility. I
 ## Usage
 To use the S21 Cat Utility, follow the syntax:
 ```
-s21_cat [OPTIONS] [FILE...]
+./s21_cat [OPTIONS] [FILE...]
 ```
 Where:
 - `OPTIONS` are optional command-line flags to customize the output format.
@@ -47,7 +47,7 @@ The S21 Grep Utility is a command-line tool inspired by the Unix `grep` utility.
 ## Usage
 To use the S21 Grep Utility, follow the syntax:
 ```
-s21_grep [OPTIONS] PATTERN [FILE...]
+./s21_grep [OPTIONS] PATTERN [FILE...]
 ```
 Where:
 - `OPTIONS` are optional command-line flags to customize the search behavior.
