@@ -31,8 +31,6 @@ Where:
 
 ---
 
-Please provide the GIF files for the build and usage, and I can incorporate them into the markdown file.
-
 # S21 Grep Utility
 
 ## Overview
@@ -69,16 +67,4 @@ Where:
 - `-o, --only-matching`: Print only the matched (non-empty) parts of matching lines.
 
 ## Example
-To search for the pattern "error" in the file `log.txt`:
-```
-s21_grep error log.txt
-```
-
-For more advanced usage, search for multiple patterns ignoring case, printing line numbers, and only displaying matching parts of lines:
-```
-s21_grep -i -n -o -e "error" -e "warning" log.txt
-```
-
----
-
-Please provide the GIF files for the build and usage, and I can incorporate them into the markdown file.
+![Build and usage](dvi/s21-grep-overview.gif)
