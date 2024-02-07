@@ -1,88 +1,98 @@
-#include <ctype.h>
-#include <getopt.h>
-#include <stdio.h>
-#include <string.h>
+#include "s21_cat.h"
 
-typedef struct {
-  int b;
-  int e;
-  int n;
-  int s;
-  int t;
-  int v;
-} flagsProps;
-
-int mainAction(int argc, char **argv);
-
-void readFile(FILE *fPtr, flagsProps *flags);
-
-int handleFile(char *argv[], flagsProps *flags);
-
-int flagParser(int argc, char **argv, flagsProps *flags);
-
-int main(int argc, char **argv) { return mainAction(argc, argv); }
+int main(int argc, char **argv) {
+  int errorCode = mainAction(argc, argv);
+  return errorCode;
+}
 
 int mainAction(int argc, char **argv) {
-  flagsProps flags = {0};
-  int err = flagParser(argc, argv, &flags);
-  while (optind < argc && !err) {
-    err = handleFile(argv, &flags);
+  Flags flags = {0};
+  int errorCode = flagParser(argc, argv, &flags);
+  while (optind < argc && !errorCode) {
+    errorCode = handleFile(argv, &flags);
     optind++;
   }
-  if (err) fprintf(stderr, "usage: ./s21_cat [-benstuv] [file ...]\n");
-  return err;
-}
-
-int flagParser(int argc, char **argv, flagsProps *flags) {
-  int err = 0, option, index = 0;
-  struct option options[] = {
-      {"number-nonblank", 0, 0, 'b'},
-      {"number", 0, 0, 'n'},
-      {"squeeze-blank", 0, 0, 's'},
-      {0, 0, 0, 0},
-  };
-  while ((option = getopt_long(argc, argv, "+beEnstTv", options, &index)) !=
-             -1 &&
-         !err) {
-    if (option == 'b')
-      flags->b = 1;
-    else if (option == 'e') {
-      flags->e = 1;
-      flags->v = 1;
-    } else if (option == 'E')
-      flags->e = 1;
-    else if (option == 'n')
-      flags->n = 1;
-    else if (option == 's')
-      flags->s = 1;
-    else if (option == 't') {
-      flags->t = 1;
-      flags->v = 1;
-    } else if (option == 'T')
-      flags->t = 1;
-    else if (option == 'v')
-      flags->v = 1;
-    else
-      err = 1;
+  if (errorCode) {
+    fprintf(stderr, USAGE_EXPLANATION_CAT);
   }
-  if (flags->b) flags->n = 0;
-  return err;
+  return errorCode;
 }
 
-void readFile(FILE *fPtr, flagsProps *flags) {
-  int str_count = 1, empty_str_count = 0;
-  int last_char = '\n', cur_char = fgetc(fPtr);
+Option *initLongOptions() {
+  static Option options[4] = {{"number-nonblank", 0, 0, 'b'},
+                              {"number", 0, 0, 'n'},
+                              {"squeeze-blank", 0, 0, 's'},
+                              {0, 0, 0, 0}};
+  return options;
+}
+
+int flagParser(int argc, char **argv, Flags *flags) {
+  int errorCode = 0;
+  int currentOption = 0;
+  int index = 0;
+  Option *options = initLongOptions();
+
+  while ((currentOption = getopt_long(
+              argc, argv, PARSABLE_FLAGS_FOR_GET_OPT_CAT, options, &index)) !=
+             -1 &&
+         !errorCode) {
+    if (currentOption == 'b')
+      flags->b = 1;
+    else if (currentOption == 'e') {
+      flags->e = 1;
+      flags->v = 1;
+    } else if (currentOption == 'E') {
+      flags->e = 1;
+    } else if (currentOption == 'n') {
+      flags->n = 1;
+    } else if (currentOption == 's') {
+      flags->s = 1;
+    } else if (currentOption == 't') {
+      flags->t = 1;
+      flags->v = 1;
+    } else if (currentOption == 'T') {
+      flags->t = 1;
+    } else if (currentOption == 'v') {
+      flags->v = 1;
+    } else {
+      errorCode = ERROR_CODE_UNKNOWN_OPTION;
+    }
+  }
+  if (flags->b) {
+    flags->n = 0;
+  }
+  return errorCode;
+}
+
+int getCommandChar(int currentChar) {
+  int newCurrentChar = 0;
+  if (currentChar == ASCII_DEL_CODE) {
+    newCurrentChar = ASCII_DEL_CHAR_REPRESENTATION;
+  } else {
+    newCurrentChar = currentChar + ASCII_SHIFT_TO_PRINTABLE_VALUE;
+  }
+  return newCurrentChar;
+}
+
+void readFile(FILE *fPtr, Flags *flags) {
+  int lineCount = INIT_LINE_COUNT;
+  int emptyLineCount = INIT_EMPTY_LINE_COUNT;
+  int last_char = '\n';
+  int cur_char = fgetc(fPtr);
+
   while (cur_char != EOF) {
-    if (flags->s && cur_char == '\n' && last_char == '\n')
-      empty_str_count++;
-    else
-      empty_str_count = 0;
-    if (empty_str_count > 1) {
+    if (flags->s && cur_char == '\n' && last_char == '\n') {
+      emptyLineCount++;
+    } else {
+      emptyLineCount = INIT_EMPTY_LINE_COUNT;
+    }
+    if (emptyLineCount > 1) {
       cur_char = fgetc(fPtr);
       continue;
     }
-    if (last_char == '\n' && ((flags->b && cur_char != '\n') || flags->n))
-      printf("%6d\t", str_count++);
+    if (last_char == '\n' && ((flags->b && cur_char != '\n') || flags->n)) {
+      printf("%6d\t", lineCount++);
+    }
 
     if (flags->t && cur_char == '\t') {
       printf("^");
@@ -91,7 +101,7 @@ void readFile(FILE *fPtr, flagsProps *flags) {
     if (flags->e && cur_char == '\n') printf("$");
     if (flags->v && iscntrl(cur_char) && cur_char != '\n' && cur_char != '\t') {
       printf("^");
-      cur_char = cur_char == 0177 ? '?' : (cur_char | 0100);
+      cur_char = getCommandChar(cur_char);
     }
     printf("%c", cur_char);
     last_char = cur_char;
@@ -99,14 +109,17 @@ void readFile(FILE *fPtr, flagsProps *flags) {
   }
 }
 
-int handleFile(char *argv[], flagsProps *flags) {
-  FILE *fPtr;
-  int error_code = 0;
-  fPtr = fopen(argv[optind], "r");
-  if (fPtr != NULL) {
-    readFile(fPtr, flags);
-    fclose(fPtr);
-  } else
-    error_code = -1;
-  return error_code;
+int handleFile(char *argv[], Flags *flags) {
+  FILE *filePtr = NULL;
+  int errorCode = 0;
+
+  filePtr = fopen(argv[optind], "r");
+
+  if (filePtr != NULL) {
+    readFile(filePtr, flags);
+    fclose(filePtr);
+  } else {
+    errorCode = ERROR_CODE_FILE_OPEN_ERROR;
+  }
+  return errorCode;
 }
