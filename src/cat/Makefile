@@ -27,16 +27,14 @@ clean:
 	-@echo "Clean finished"
 
 style:
-	@cp ../../materials/linters/.clang-format .
-	@find ../../ -type f -name "*.c" -exec clang-format -i {} \;
-	@find ../../ -type f -name "*.h" -exec clang-format -i {} \;
-	@rm .clang-format
+	@find ../../ -type f -name "*.c" -exec clang-format -i -style=Google {} \;
+	@find ../../ -type f -name "*.h" -exec clang-format -i -style=Google {} \;
 	@echo "Target style is finished"
 
 style_check:
 	@cp ../../materials/linters/.clang-format .
-	@find ../../ -type f -name "*.c" -exec clang-format -n {} \;
-	@find ../../ -type f -name "*.h" -exec clang-format -n {} \;
+	@find ../../ -type f -name "*.c" -exec clang-format -n -style=Google {} \;
+	@find ../../ -type f -name "*.h" -exec clang-format -n -style=Google {} \;
 	@rm .clang-format
 	@echo "Target style_check is finished"
 
